@@ -1,0 +1,44 @@
+# Change `app` to a unique name. Region jnb = Johannesburg (closest to Nairobi).
+app = "topline-jobs"
+primary_region = "jnb"
+
+[build]
+
+[deploy]
+  # Creates/updates the database tables before each new version starts.
+  release_command = "alembic upgrade head"
+
+[env]
+  APP_ENV = "production"
+  # No SMS provider is wired up yet. "none" sends nothing and never exposes OTP codes.
+  OTP_PROVIDER = "none"
+  # Change to "production" once Safaricom has approved your live credentials.
+  MPESA_ENVIRONMENT = "sandbox"
+  # Must point at the volume mounted below, otherwise uploads vanish on every deploy.
+  DOCUMENT_STORAGE_DIR = "/data/documents"
+  # Set your real public URL here:
+  MPESA_CALLBACK_URL = "https://topline-jobs.fly.dev/api/v1/payments/mpesa/callback"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    timeout = "5s"
+
+# One volume = one machine. Do not scale to multiple machines while uploads live on disk.
+[[mounts]]
+  source = "topline_data"
+  destination = "/data"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

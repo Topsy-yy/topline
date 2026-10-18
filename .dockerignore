@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+storage/documents/*
+*.zip
+*.log
+data/

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TopLine — Worker Dashboard</title>
+  <style>
+    :root {
+      --navy: #0e1e38;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --bd: #e2e8f0;
+      --tx: #0f172a;
+      --mut: #64748b;
+      --gold: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--tx);
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--bd);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .w {
+      max-width: 1040px;
+      margin: 28px auto;
+      padding: 0 20px;
+    }
+    .banner {
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .banner.locked {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+    .banner.active {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 24px;
+    }
+    @media(max-width: 768px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .btn {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn.gold {
+      background: var(--gold);
+      color: #1a1200;
+    }
+    .btn.s { padding: 6px 12px; font-size: 13px; }
+    .btn.o { background: transparent; border: 1px solid var(--bd); color: var(--tx); }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pill-submitted { background: #eff6ff; color: #1d4ed8; }
+    .pill-under_review { background: #fef3c7; color: #b45309; }
+    .pill-shortlisted { background: #dcfce7; color: #15803d; }
+    .pill-rejected { background: #fee2e2; color: #b91c1c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--bd); font-size: 14px; }
+    th { color: var(--mut); font-weight: 600; background: #f8fafc; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="brand">🏗️ TopLine</a>
+    <div id="header-user" style="display:flex;align-items:center;gap:12px;"></div>
+  </header>
+
+  <div class="w">
+    <!-- Activation Status Banner -->
+    <div id="activation-banner" class="banner locked">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:18px;">Unlock Full Platform Access</h3>
+        <p style="margin:0;font-size:14px;">Pay the one-time KSh 1,000 platform fee to submit job applications directly to Gulf contractors.</p>
+      </div>
+      <div>
+        <button class="btn gold" onclick="triggerMpesaPrompt()">Pay KSh 1,000 via M-Pesa</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left Column: Profile Card -->
+      <div>
+        <div class="card">
+          <h3 style="margin:0 0 16px;font-size:17px;">Worker Profile</h3>
+          <div style="font-size:14px;line-height:1.8;">
+            <div><b style="color:var(--mut);">Full Name:</b> <span id="p-name">-</span></div>
+            <div><b style="color:var(--mut);">Phone:</b> <span id="p-phone">-</span></div>
+            <div><b style="color:var(--mut);">Trade:</b> <span id="p-trade">-</span></div>
+            <div><b style="color:var(--mut);">Preferred Country:</b> <span id="p-country">-</span></div>
+            <div><b style="color:var(--mut);">Account Status:</b> <span id="p-status">-</span></div>
+          </div>
+          <div style="margin-top:20px;border-top:1px solid var(--bd);padding-top:16px;">
+            <a href="/#jobs" class="btn o s" style="width:100%;text-align:center;box-sizing:border-box;">Browse Gulf Jobs</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 8px;font-size:16px;">Platform Entitlement</h3>
+          <p style="font-size:13px;color:var(--mut);margin:0 0 12px;">Enables verified direct application submissions and official contractor matching.</p>
+          <div id="entitlement-status" style="font-size:14px;">Checking access...</div>
+        </div>
+      </div>
+
+      <!-- Right Column: Applications History -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:18px;">My Submitted Applications</h3>
+            <span id="app-count" style="font-size:13px;color:var(--mut);">0 applications</span>
+          </div>
+          
+          <div style="overflow-x:auto;">
+            <table id="apps-table">
+              <thead>
+                <tr>
+                  <th>Job Title</th>
+                  <th>Country</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Documents</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" style="text-align:center;color:var(--mut);padding:24px;">Loading your applications...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    async function loadDashboard() {
+      const token = window.apiClient.getToken();
+      if (!token) {
+        window.location.href = '/#join';
+        return;
+      }
+
+      try {
+        const profile = await window.apiClient.getMyProfile();
+        const access = await window.apiClient.getMyAccess();
+        const apps = await window.apiClient.getMyApplications();
+
+        // Render Header
+        document.getElementById('header-user').innerHTML = `
+          <span style="font-size:14px;font-weight:600;">${escapeHtml(profile.full_name)}</span>
+          <button class="btn s o" onclick="signOut()">Sign Out</button>
+        `;
+
+        // Render Profile
+        document.getElementById('p-name').textContent = profile.full_name;
+        document.getElementById('p-phone').textContent = profile.phone;
+        document.getElementById('p-trade').textContent = profile.trade;
+        document.getElementById('p-country').textContent = profile.preferred_country;
+        document.getElementById('p-status').innerHTML = profile.phone_verified_at 
+          ? '<span style="color:var(--green);font-weight:700;">✓ Phone Verified</span>' 
+          : '<span style="color:var(--mut);">Pending Verification</span>';
+
+        // Render Activation Banner & Entitlements
+        const banner = document.getElementById('activation-banner');
+        const entStatus = document.getElementById('entitlement-status');
+
+        if (access.is_activated) {
+          banner.className = 'banner active';
+          banner.innerHTML = `
+            <div>
+              <h3 style="margin:0 0 4px;font-size:18px;color:#065f46;">✓ Platform Access Active</h3>
+              <p style="margin:0;font-size:14px;color:#047857;">You have unlocked full application capabilities. You can apply to all verified Gulf construction jobs.</p>
+            </div>
+            <div>
+              <a href="/#jobs" class="btn" style="background:#059669;">Browse &amp; Apply Now</a>
+            </div>
+          `;
+          entStatus.innerHTML = `
+            <div style="color:var(--green);font-weight:700;">✓ Active Platform Entitlement</div>
+            <div style="font-size:12px;color:var(--mut);margin-top:4px;">Unlocked via M-Pesa KSh 1,000</div>
+          `;
+        } else {
+          banner.className = 'banner locked';
+          entStatus.innerHTML = `
+            <div style="color:#b45309;font-weight:700;">🔒 Access Locked</div>
+            <div style="font-size:12px;color:var(--mut);margin-top:4px;">Requires KSh 1,000 platform activation</div>
+          `;
+        }
+
+        // Render Applications Table
+        document.getElementById('app-count').textContent = `${apps.length} application${apps.length === 1 ? '' : 's'}`;
+        const tbody = document.querySelector('#apps-table tbody');
+        if (apps.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align:center;color:var(--mut);padding:32px;">
+                You haven't applied to any jobs yet.<br>
+                <a href="/#jobs" class="btn s gold" style="margin-top:10px;">Browse Verified Jobs</a>
+              </td>
+            </tr>
+          `;
+        } else {
+          tbody.innerHTML = apps.map(a => `
+            <tr>
+              <td><b>${escapeHtml(a.job_title || 'Gulf Job')}</b></td>
+              <td>${escapeHtml(a.job_country || '-')}</td>
+              <td>${new Date(a.submitted_at).toLocaleDateString()}</td>
+              <td><span class="status-pill pill-${a.status}">${a.status.replace('_', ' ').toUpperCase()}</span></td>
+              <td>
+                ${a.documents.map(d => `<a href="/api/v1/documents/${d.id}/download" target="_blank" class="btn s o" style="display:inline-block;margin:2px;">📄 ${d.document_type.toUpperCase()}</a>`).join('') || '<span style="color:var(--mut);font-size:12px;">None</span>'}
+              </td>
+            </tr>
+          `).join('');
+        }
+
+      } catch (err) {
+        console.error('Failed to load dashboard:', err);
+        window.location.href = '/#join';
+      }
+    }
+
+    async function triggerMpesaPrompt() {
+      const phone = prompt('Enter your M-Pesa phone number (e.g. 0712345678):');
+      if (!phone) return;
+      try {
+        const payRes = await window.apiClient.initiatePayment(phone);
+        const confirmSim = confirm(
+          `M-Pesa STK push initiated to ${phone} for KSh 1,000.\n\n` +
+          `[DEV / DEMO MODE]: Would you like to confirm this payment now via the verified mock provider?`
+        );
+        if (confirmSim) {
+          await window.apiClient.mockConfirmPayment(payRes.id);
+          alert('Payment confirmed! Platform access unlocked.');
+          loadDashboard();
+        }
+      } catch (err) {
+        alert('Payment error: ' + err.message);
+      }
+    }
+
+    async function signOut() {
+      try { await window.apiClient.logout(); } catch (e) {}
+      window.apiClient.setToken(null);
+      window.location.href = '/';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>
+
